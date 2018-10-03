@@ -34,6 +34,8 @@ Each server is running Windows Server 2016 and has the [standard software](/READ
 
 Before you start ensure you have completed the [prerequisites](/README.md#prerequisites).
 
+Run the `SetupResources.ps1` file in this folder. This will internalize any packages needed for the environment.
+
 Run `vagrant up` from this folder and you will bring up the three servers.
 
 At the very end of the `vagrant up` process you will see a username and password. You can use this to log into Jenkins using `https://localhost:8080` from your guest computer.

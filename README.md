@@ -19,7 +19,9 @@ There are a few things you need to do to setup your system to be able to run the
 
 If you are running a business edition of Chocolatey, perform the following steps:
 
-1. Run `SetupResources.ps1` from the root folder. This will download and internalize a selection of standard packages used for different environments;
+1. Run `SetupCommonResources.ps1` from the root folder. This will download and internalize a selection of standard packages used for different environments:
+    * If you want to force the redownload of the common packages, use the `-Force` parameter;
+    * If you need or want to download the .NET 4 installer, please use the `-DownloadDotNet4` parameter;
 1. Copy `chocolatey.extension.<VERSION>.nupkg` to the `packages` folder;
 1. Copy your business license to the `licenses` folder and make sure it is called `chocolatey.license.xml`;
 

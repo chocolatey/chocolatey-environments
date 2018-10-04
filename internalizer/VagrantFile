@@ -1,0 +1,151 @@
+unless Vagrant.has_plugin?("vagrant-reload")
+  raise 'vagrant-reload is not installed!'
+end
+
+Vagrant.configure("2") do |config|
+
+  config.vm.define "prodreposrv" do |cfg|
+    cfg.vm.box = "StefanScherer/windows_2016"
+    cfg.windows.halt_timeout = 60
+    # https://github.com/hashicorp/vagrant/issues/6430
+    cfg.winrm.retry_limit = 30
+    cfg.winrm.retry_delay = 10
+    cfg.winrm.username = "vagrant"
+    cfg.winrm.password = "vagrant"
+    cfg.vm.guest = :windows
+    cfg.vm.communicator = "winrm"
+
+    cfg.vm.hostname = "prodrepo-srv"
+    cfg.windows.set_work_network = true
+
+    cfg.vm.network :forwarded_port, guest: 5985, host: 5985, id: "winrm", auto_correct: true, host_ip: "127.0.0.1"
+    cfg.vm.network :forwarded_port, guest: 3389, host: 3389, id: "rdp", auto_correct: true, host_ip: "127.0.0.1"
+    cfg.vm.network :private_network, ip: "10.10.13.14", virtualbox__intnet: "internalizer"
+
+    cfg.vm.synced_folder "../packages", "/packages"
+    cfg.vm.synced_folder "../licenses", "/licenses"
+
+    cfg.vm.provider :virtualbox do |v, override|
+        v.gui = true
+        v.memory = 2048
+        v.customize ["modifyvm", :id, "--cpuexecutioncap", "50"]
+        v.customize ["modifyvm", :id, "--vram", 32]
+        v.customize ["modifyvm", :id, "--audio", "none"]
+        v.customize ["modifyvm", :id, "--clipboard", "bidirectional"]
+        v.customize ["modifyvm", :id, "--draganddrop", "hosttoguest"]
+        v.customize ["modifyvm", :id, "--usb", "off"]
+        v.customize ["modifyvm", :id, "--natdnshostresolver1", "on"]
+        # linked clones for speed and size
+        v.linked_clone = true if Vagrant::VERSION >= '1.8.0'
+    end
+
+    cfg.vm.provision :shell, :path => "../scripts/ConfigureAutoLogin.ps1", privileged: false
+    cfg.vm.provision :shell, :path => "../scripts/PrepareWindows.ps1", privileged: false
+    cfg.vm.provision :shell, :path => "../scripts/InstallChocolatey.ps1", args: "-UseLocalSource", privileged: false
+    cfg.vm.provision :shell, :path => "../scripts/DeployChocolateyLicense.ps1", privileged: false
+    cfg.vm.provision :shell, :path => "../scripts/InstallStandardApps.ps1", privileged: false
+    cfg.vm.provision :shell, :path => "../scripts/NotifyGuiAppsOfEnvironmentChanges.ps1", privileged: false
+    cfg.vm.provision :shell, :path => "../scripts/ProvisionChocolateyServer.ps1", privileged: false
+end
+
+config.vm.define "testreposrv" do |cfg|
+    cfg.vm.box = "StefanScherer/windows_2016"
+    cfg.windows.halt_timeout = 60
+    # https://github.com/hashicorp/vagrant/issues/6430
+    cfg.winrm.retry_limit = 30
+    cfg.winrm.retry_delay = 10
+    cfg.winrm.username = "vagrant"
+    cfg.winrm.password = "vagrant"
+    cfg.vm.guest = :windows
+    cfg.vm.communicator = "winrm"
+
+    cfg.vm.hostname = "testrepo-srv"
+    cfg.windows.set_work_network = true
+
+    cfg.vm.network :forwarded_port, guest: 5985, host: 5985, id: "winrm", auto_correct: true, host_ip: "127.0.0.1"
+    cfg.vm.network :forwarded_port, guest: 3389, host: 3389, id: "rdp", auto_correct: true, host_ip: "127.0.0.1"
+    cfg.vm.network :forwarded_port, guest: 22, host: 2222, id: "ssh", auto_correct: true, host_ip: "127.0.0.1"
+    cfg.vm.network :private_network, ip: "10.10.13.12", virtualbox__intnet: "internalizer"
+
+    cfg.vm.synced_folder "../packages", "/packages"
+    cfg.vm.synced_folder "../licenses", "/licenses"
+
+    cfg.vm.provider :virtualbox do |v, override|
+        v.gui = true
+        v.memory = 2048
+        v.customize ["modifyvm", :id, "--cpuexecutioncap", "50"]
+        v.customize ["modifyvm", :id, "--vram", 32]
+        v.customize ["modifyvm", :id, "--audio", "none"]
+        v.customize ["modifyvm", :id, "--clipboard", "bidirectional"]
+        v.customize ["modifyvm", :id, "--draganddrop", "hosttoguest"]
+        v.customize ["modifyvm", :id, "--usb", "off"]
+        v.customize ["modifyvm", :id, "--natdnshostresolver1", "on"]
+        # linked clones for speed and size
+        v.linked_clone = true if Vagrant::VERSION >= '1.8.0'
+    end
+
+    cfg.vm.provision :shell, :path => "../scripts/ConfigureAutoLogin.ps1", privileged: false
+    cfg.vm.provision :shell, :path => "../scripts/PrepareWindows.ps1", privileged: false
+    cfg.vm.provision :shell, :path => "../scripts/InstallChocolatey.ps1", args: "-UseLocalSource", privileged: false
+    cfg.vm.provision :shell, :path => "../scripts/DeployChocolateyLicense.ps1", privileged: false
+    cfg.vm.provision :shell, :path => "../scripts/InstallStandardApps.ps1", privileged: false
+    cfg.vm.provision :shell, :path => "../scripts/NotifyGuiAppsOfEnvironmentChanges.ps1", privileged: false
+    cfg.vm.provision :shell, :path => "../scripts/ProvisionChocolateyServer.ps1", privileged: false
+  end
+
+config.vm.define "jenkins" do |cfg|
+    cfg.vm.box = "StefanScherer/windows_2016"
+    cfg.windows.halt_timeout = 60
+    # https://github.com/hashicorp/vagrant/issues/6430
+    cfg.winrm.retry_limit = 30
+    cfg.winrm.retry_delay = 10
+    cfg.winrm.username = "vagrant"
+    cfg.winrm.password = "vagrant"
+    cfg.vm.guest = :windows
+    cfg.vm.communicator = "winrm"
+
+    cfg.vm.hostname = "jenkins-srv"
+    cfg.windows.set_work_network = true
+
+    cfg.vm.network :forwarded_port, guest: 5985, host: 5985, id: "winrm", auto_correct: true, host_ip: "127.0.0.1"
+    cfg.vm.network :forwarded_port, guest: 3389, host: 3389, id: "rdp", auto_correct: true, host_ip: "127.0.0.1"
+    cfg.vm.network :forwarded_port, guest: 22, host: 2222, id: "ssh", auto_correct: true, host_ip: "127.0.0.1"
+    cfg.vm.network :forwarded_port, guest: 8080, host: 8080, id: "jenkins", auto_correct: true, host_ip: "127.0.0.1"
+    cfg.vm.network :private_network, ip: "10.10.13.15", virtualbox__intnet: "internalizer"
+
+    cfg.vm.synced_folder "../packages", "/packages"
+    cfg.vm.synced_folder "../licenses", "/licenses"
+
+    cfg.vm.provider :virtualbox do |v, override|
+        v.gui = true
+        v.memory = 2048
+        v.customize ["modifyvm", :id, "--cpuexecutioncap", "50"]
+        v.customize ["modifyvm", :id, "--vram", 32]
+        v.customize ["modifyvm", :id, "--audio", "none"]
+        v.customize ["modifyvm", :id, "--clipboard", "bidirectional"]
+        v.customize ["modifyvm", :id, "--draganddrop", "hosttoguest"]
+        v.customize ["modifyvm", :id, "--usb", "off"]
+        v.customize ["modifyvm", :id, "--natdnshostresolver1", "on"]
+        # linked clones for speed and size
+        v.linked_clone = true if Vagrant::VERSION >= '1.8.0'
+    end
+
+    cfg.vm.provision :shell, :path => "../scripts/ConfigureAutoLogin.ps1", privileged: false
+    cfg.vm.provision :shell, :path => "../scripts/PrepareWindows.ps1", privileged: false
+    cfg.vm.provision :shell, :path => "../scripts/InstallChocolatey.ps1", args: "-UseLocalSource", privileged: false
+    cfg.vm.provision :shell, :path => "../scripts/DeployChocolateyLicense.ps1", privileged: false
+    cfg.vm.provision :shell, :path => "../scripts/InstallBGInfo.ps1", privileged: false
+    cfg.vm.provision :shell, :path => "../scripts/InstallStandardApps.ps1", privileged: false
+    pkgs = ['jenkins']
+    pkgs.each { |pkg|
+      # when using a variable (pkg here) use an array with :args
+      cfg.vm.provision :shell, :path => "../scripts/InstallChocoApps.ps1", :args => [pkg], privileged: false
+    }
+    cfg.vm.provision :shell, :path => "scripts/ProvisionJenkins.ps1", privileged: true
+    cfg.vm.provision :shell, run: "always", privileged: false, inline: <<-SHELL
+         Write-Host "Login to Jenkins using your browser to go to http://localhost:8080"
+         $pw = Get-Content "c:\\program files (x86)\\jenkins\\secrets\\initialAdminPassword"
+         Write-Host "Your Jenkins login username is 'admin' and password is '$pw' (without the quotes)."
+     SHELL
+  end
+end

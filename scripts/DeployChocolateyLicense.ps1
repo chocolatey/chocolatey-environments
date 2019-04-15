@@ -1,18 +1,23 @@
 [CmdletBinding()]
 Param (
+    [ValidateSet("Pro", "Bus", "Arch", "MSP")]
+    [string]
+    $LicenseType = "Bus",
+
+    [string]
+    $LicenseRootPath = 'c:\licenses',
+
     # Allow prerelease versions of chocolatey.extension to be installed
     [switch]
     $AllowPrerelease
 )
-
-$licenseRootPath = "c:\licenses"
 
 if (!(Test-Path -Path env:ChocolateyInstall)) {
     Write-Warning 'ChocolateyInstall environment variable not found. Chocolatey not installed?'
     exit
 }
 
-$licenseSourcePath = Join-Path -Path $licenseRootPath -ChildPath "chocolatey.license.xml"
+$licenseSourcePath = Join-Path -Path $LicenseRootPath -ChildPath "$LicenseType-chocolatey.license.xml"
 $licenseDestinationPath = Join-Path -Path $env:ChocolateyInstall -ChildPath 'license\chocolatey.license.xml'
 
 if (!(Test-Path $licenseSourcePath)) {
@@ -23,7 +28,7 @@ if (!(Test-Path $licenseSourcePath)) {
 $path = Split-Path -Path $licenseDestinationPath -Parent
 if (!(Test-Path -Path $path)) {
     Write-Host 'License folder not found. Creating.'
-    New-Item -ItemType Directory -Path $path
+    $null = New-Item -ItemType Directory -Path $path
 }
 
 Copy-Item -Path $licenseSourcePath -Destination $licenseDestinationPath -Force
